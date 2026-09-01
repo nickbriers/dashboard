@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="icon" href="homepage.png">
+  <style>
+    :root {
+      --bg: #0f172a; --card-bg: #1e293b; --card-border: #334155;
+      --accent: #38bdf8; --accent-hover: #0ea5e9;
+      --text: #f8fafc; --subtext: #94a3b8;
+      --element-bg: #0f172a; --element-hover: #334155;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+    [data-theme="light"] {
+      --bg: #f1f5f9; --card-bg: #ffffff; --card-border: #cbd5e1;
+      --accent: #0284c7; --accent-hover: #0369a1;
+      --text: #0f172a; --subtext: #64748b;
+      --element-bg: #f8fafc; --element-hover: #e2e8f0;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1.5rem; transition: background 0.3s, color 0.3s; }
+    
+    .dashboard-container { display: flex; flex-direction: column; gap: 1.25rem; width: 100%; max-width: 1200px; }
+    .top-nav-wrapper { display: flex; gap: 0.75rem; width: 100%; }
+    .navbar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 1rem; padding: 0.75rem 1.25rem; box-shadow: var(--shadow); flex: 1; transition: all 0.3s; }
+    .nav-left, .nav-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+    .nav-brand { font-weight: 700; font-size: 1.05rem; color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 0.5rem; }
+    
+    .view-section { display: none; flex-direction: column; gap: 1.25rem; width: 100%; }
+    .view-section.active-view { display: flex; }
+
+    /* Unified Grid layout to match columns perfectly */
+    .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; align-items: stretch; }
+    
+    .card { background: var(--card-bg); padding: 1.5rem; border-radius: 1rem; border: 1px solid var(--card-border); box-shadow: var(--shadow); display: flex; flex-direction: column; transition: all 0.3s; width: 100%; }
+    .card-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--accent); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.75rem; }
+    
+    .theme-toggle-btn, .nav-link-btn { background: var(--element-bg); border: 1px solid var(--card-border); color: var(--text); font-weight: 600; font-size: 0.85rem; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s; }
+    .theme-toggle-btn { font-size: 1.1rem; border-radius: 1rem; background: var(--card-bg); box-shadow: var(--shadow); width: 52px; justify-content: center; flex-shrink: 0; }
+    .nav-link-btn.active-nav { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .theme-toggle-btn:hover, .nav-link-btn:hover:not(.active-nav) { background: var(--element-hover); border-color: var(--accent); }
+    
+    .header-card { justify-content: center; align-items: center; text-align: center; padding: 1.75rem; }
+    .greeting { font-size: 1.1rem; font-weight: 500; color: var(--subtext); margin-bottom: 0.5rem; }
+    .clock { font-size: 2.75rem; font-weight: 700; color: var(--accent); letter-spacing: -1px; line-height: 1.1; }
+    .date { font-size: 0.95rem; color: var(--subtext); margin-top: 0.5rem; }
+    
+    .search-card { justify-content: center; grid-column: span 2; }
+    .search-header { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+    .search-engine-toggle { display: flex; gap: 0.25rem; }
+    .engine-btn { background: transparent; border: none; color: var(--subtext); font-weight: 600; cursor: pointer; padding: 0.35rem 0.75rem; border-radius: 0.5rem; transition: all 0.2s; }
+    .engine-btn.active { background: var(--element-hover); color: var(--accent); border: 1px solid var(--card-border); }
+    .gemini-btn { background: var(--accent); color: var(--bg); text-decoration: none; font-size: 0.85rem; font-weight: 700; padding: 0.4rem 1rem; border-radius: 0.5rem; }
+    .search-box input { width: 100%; background: var(--element-bg); border: 1px solid var(--card-border); border-radius: 0.75rem; outline: none; color: var(--text); font-size: 1.1rem; padding: 0.85rem 1.25rem; }
+    
+    .category-group { margin-bottom: 1rem; }
+    .category-label { font-size: 0.75rem; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; font-weight: 600; }
+    .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 0.5rem; }
+    .shortcut { background: var(--element-bg); padding: 0.6rem 0.5rem; border-radius: 0.5rem; text-decoration: none; color: var(--text); font-size: 0.8rem; font-weight: 500; border: 1px solid var(--card-border); display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
+    .shortcut img { width: 14px; height: 14px; }
+    
+    .todo-input { display: flex; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .todo-input input { flex: 1; padding: 0.75rem; border-radius: 0.5rem; border: 1px solid var(--card-border); background: var(--element-bg); color: var(--text); outline: none; }
+    .todo-input button { padding: 0.75rem 1.25rem; background: var(--accent); color: var(--bg); border: none; border-radius: 0.5rem; font-weight: 600; cursor: pointer; }
+    ul { list-style: none; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--card-border); font-size: 0.95rem; }
+    .todo-left { display: flex; align-items: center; gap: 0.75rem; }
+    li.completed .todo-text { color: var(--subtext); text-decoration: line-through; }
+    .delete-btn { background: transparent; color: #f87171; border: 1px solid var(--card-border); width: 28px; height: 28px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    
+    .stock-item { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--card-border); font-size: 0.9rem; }
+    .stock-info { display: flex; flex-direction: column; }
+    .stock-symbol { font-weight: 700; color: var(--text); }
+    .stock-price-box { text-align: right; display: flex; align-items: center; gap: 0.5rem; }
+    .stock-price { font-weight: 600; }
+    .stock-change { font-size: 0.8rem; font-weight: 600; padding: 0.15rem 0.35rem; border-radius: 4px; }
+    .stock-change.positive { color: #34d399; background: rgba(52, 211, 153, 0.1); }
+    .stock-change.negative { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+    .action-icon-btn { background: transparent; border: none; color: var(--subtext); cursor: pointer; font-size: 0.9rem; padding: 0.2rem; }
+    
+    .right-bottom-stack { display: flex; flex-direction: column; gap: 1.25rem; flex: 1; }
+    .right-bottom-stack .card:last-child { flex: 1; display: flex; flex-direction: column; }
+    textarea.notes-box { width: 100%; flex: 1; min-height: 120px; background: var(--element-bg); border: 1px solid var(--card-border); border-radius: 0.75rem; padding: 1rem; color: var(--text); font-family: inherit; resize: none; outline: none; line-height: 1.5; }
+    
+    /* Quick Calculator Card */
+    .calc-box { display: flex; flex-direction: column; gap: 0.75rem; }
+    .calc-input { width: 100%; padding: 0.75rem; background: var(--element-bg); border: 1px solid var(--card-border); color: var(--text); border-radius: 0.5rem; outline: none; font-size: 1rem; }
+    .calc-result { padding: 0.75rem; background: var(--element-bg); border: 1px solid var(--card-border); border-radius: 0.5rem; color: var(--accent); font-weight: 700; font-size: 1.1rem; text-align: right; }
+
+    /* Calendar & Recipe styles */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .calendar-header h2 { color: var(--accent); }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
+    .cal-day-header { font-weight: 600; color: var(--subtext); padding-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase;}
+    .cal-day { background: var(--element-bg); border: 1px solid var(--card-border); border-radius: 0.5rem; padding: 1rem 0; font-size: 1.1rem; font-weight: 500; min-height: 100px; display: flex; align-items: center; justify-content: center; }
+    .cal-day.today { background: rgba(56, 189, 248, 0.1); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+    .cal-day.empty { background: transparent; border: none; }
+
+    .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.25rem; }
+    .recipe-card { background: var(--element-bg); border: 1px solid var(--card-border); border-radius: 0.75rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .recipe-title { font-weight: 700; font-size: 1.1rem; color: var(--accent); margin-bottom: 0.25rem; }
+    .recipe-time { font-size: 0.8rem; color: var(--subtext); font-weight: 600; }
+    .recipe-desc { font-size: 0.9rem; line-height: 1.4; color: var(--text); margin-bottom: 1rem; flex-grow: 1;}
+    .recipe-actions { display: flex; justify-content: flex-end; gap: 0.5rem; border-top: 1px solid var(--card-border); padding-top: 0.75rem; }
+
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: var(--card-bg); border: 1px solid var(--card-border); padding: 1.5rem; border-radius: 1rem; width: 100%; max-width: 400px; box-shadow: var(--shadow); }
+    .modal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 1.0rem; color: var(--accent); }
+    .modal input, .modal textarea { width: 100%; padding: 0.75rem; background: var(--element-bg); border: 1px solid var(--card-border); color: var(--text); border-radius: 0.5rem; margin-bottom: 1rem; outline: none; font-family: inherit;}
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 0.5rem; }
+    .modal-buttons button { padding: 0.5rem 1rem; border-radius: 0.5rem; font-weight: 600; cursor: pointer; border: 1px solid var(--card-border); }
+    .btn-cancel { background: var(--element-bg); color: var(--text); }
+    .btn-save { background: var(--accent); color: var(--bg); border: none; }
+    
+    @media (max-width: 1024px) { .home-grid { grid-template-columns: 1fr; } .search-card { grid-column: span 1; } }
+    @media (max-width: 768px) { .top-nav-wrapper { flex-direction: column; } .navbar { flex-direction: column; gap: 0.75rem; } }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-container">
+    
+    <div class="top-nav-wrapper">
+      <nav class="navbar">
+        <div class="nav-left">
+          <a href="#" class="nav-brand" onclick="switchView('home', event)">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="9"></rect>
+              <rect x="14" y="3" width="7" height="5"></rect>
+              <rect x="14" y="12" width="7" height="9"></rect>
+              <rect x="3" y="16" width="7" height="5"></rect>
+            </svg>
+            Dashboard
+          </a>
+        </div>
+        <div class="nav-right">
+          <button class="nav-link-btn active-nav" id="nav-btn-home" onclick="switchView('home')">🏠 Home</button>
+          <button class="nav-link-btn" id="nav-btn-calendar" onclick="switchView('calendar')">📅 Calendar</button>
+          <button class="nav-link-btn" id="nav-btn-finance" onclick="switchView('finance')">📈 Finance</button>
+          <button class="nav-link-btn" id="nav-btn-recipes" onclick="switchView('recipes')">🍳 Recipes</button>
+        </div>
+      </nav>
+      <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeToggleBtn">🌙</button>
+    </div>
+
+    <!-- HOME VIEW -->
+    <div id="view-home" class="view-section active-view">
+      <div class="home-grid">
+        <!-- Row 1 -->
+        <div class="card header-card">
+          <div class="greeting" id="greeting">Hello, Nick!</div>
+          <div class="clock" id="clock">00:00:00</div>
+          <div class="date" id="date">Loading date...</div>
+        </div>
+
+        <div class="card search-card">
+          <div class="search-header">
+            <div class="search-engine-toggle">
+              <button type="button" class="engine-btn active" id="btn-google" onclick="setEngine('google')">Google</button>
+              <button type="button" class="engine-btn" id="btn-youtube" onclick="setEngine('youtube')">YouTube</button>
+              <button type="button" class="engine-btn" id="btn-wiki" onclick="setEngine('wiki')">Wikipedia</button>
+            </div>
+            <a href="https://gemini.google.com" target="_blank" class="gemini-btn">✨ Gemini</a>
+          </div>
+          <form class="search-box" id="searchForm" action="https://www.google.com/search" method="GET">
+            <input type="text" id="searchInput" name="q" placeholder="Search the web..." autocomplete="off" autofocus />
+          </form>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="card" style="flex: 1; height: 100%;">
+          <div class="card-title">Tasks</div>
+          <div class="todo-input">
+            <input type="text" id="todoInput" placeholder="New task..." onkeypress="if(event.key === 'Enter') addTodo()" />
+            <button onclick="addTodo()">Add</button>
+          </div>
+          <ul id="todoList"></ul>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Bookmarks</div>
+          <div class="category-group">
+            <div class="category-label">Personal</div>
+            <div class="links-grid"><a class="shortcut" href="https://gmail.com"><img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="Gmail"> Gmail</a></div>
+          </div>
+          <div class="category-group">
+            <div class="category-label">Entertainment</div>
+            <div class="links-grid"><a class="shortcut" href="https://youtube.com"><img src="https://www.google.com/s2/favicons?domain=youtube.com&sz=32" alt="YT"> YouTube</a></div>
+          </div>
+          <div class="category-group">
+            <div class="category-label">Work & Tools</div>
+            <div class="links-grid">
+              <a class="shortcut" href="https://claude.ai"><img src="https://www.google.com/s2/favicons?domain=claude.ai&sz=32" alt="Claude"> Claude</a>
+              <a class="shortcut" href="https://gemini.google.com"><img src="https://www.google.com/s2/favicons?domain=gemini.google.com&sz=32" alt="Gemini"> Gemini</a>
+              <a class="shortcut" href="https://leonardo.ai"><img src="https://www.google.com/s2/favicons?domain=leonardo.ai&sz=32" alt="Leonardo"> Leonardo</a>
+              <a class="shortcut" href="https://photopea.com"><img src="https://www.google.com/s2/favicons?domain=photopea.com&sz=32" alt="Photopea"> Photopea</a>
+            </div>
+          </div>
+          <div class="category-group">
+            <div class="category-label">Games</div>
+            <div class="links-grid"><a class="shortcut" href="https://geoguessr.com"><img src="https://www.google.com/s2/favicons?domain=geoguessr.com&sz=32" alt="Geo"> Geoguessr</a></div>
+          </div>
+          <div class="category-group">
+            <div class="category-label">News</div>
+            <div class="links-grid">
+              <a class="shortcut" href="https://nos.nl"><img src="https://www.google.com/s2/favicons?domain=nos.nl&sz=32" alt="NOS"> NOS</a>
+              <a class="shortcut" href="https://vrt.be/vrtnws"><img src="https://www.google.com/s2/favicons?domain=vrt.be&sz=32" alt="VRT"> VRT NWS</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="right-bottom-stack">
+          <!-- QUICK CALCULATOR CARD -->
+          <div class="card">
+            <div class="card-title">Quick Calculator</div>
+            <div class="calc-box">
+              <input type="text" id="calcInput" class="calc-input" placeholder="e.g. 150 * 1.21" oninput="calculate()" autocomplete="off" />
+              <div class="calc-result" id="calcResult">= 0</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Notes</div>
+            <textarea class="notes-box" id="quickNotes" placeholder="Jot down thoughts here... (Auto-saves)" oninput="saveNotes()"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CALENDAR VIEW -->
+    <div id="view-calendar" class="view-section">
+      <div class="card">
+        <div class="calendar-header">
+          <button class="nav-link-btn" onclick="changeMonth(-1)">❮ Prev</button>
+          <h2 id="calendar-month-year">Month Year</h2>
+          <button class="nav-link-btn" onclick="changeMonth(1)">Next ❯</button>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+    </div>
+
+    <!-- FINANCE VIEW -->
+    <div id="view-finance" class="view-section">
+      <div class="card" style="max-width: 600px; width: 100%; margin: 0 auto;">
+        <div class="card-title">Markets <button class="action-icon-btn" onclick="openStockModal()">➕ Add Ticker</button></div>
+        <div id="stockList"><div class="stock-item"><span class="loading-text">Loading...</span></div></div>
+      </div>
+    </div>
+
+    <!-- RECIPES VIEW -->
+    <div id="view-recipes" class="view-section">
+      <div class="card">
+        <div class="card-title">
+          My Recipe Book
+          <button class="nav-link-btn" onclick="openRecipeModal()">➕ Add Recipe</button>
+        </div>
+        <div class="recipe-grid" id="recipeList"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="stockModal">
+    <div class="modal">
+      <div class="modal-title">Add Stock</div>
+      <input type="text" id="modalSymbol" placeholder="Ticker Symbol (e.g. AAPL)" onkeypress="if(event.key === 'Enter') addStock()" />
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeStockModal()">Cancel</button>
+        <button class="btn-save" onclick="addStock()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="recipeModal">
+    <div class="modal">
+      <div class="modal-title">Add New Recipe</div>
+      <input type="text" id="recipeTitle" placeholder="Recipe Name" />
+      <input type="text" id="recipeTime" placeholder="Cooking Time" />
+      <textarea id="recipeDesc" placeholder="Description or ingredients..." rows="4"></textarea>
+      <div class="modal-buttons">
+        <button class="btn-cancel" onclick="closeRecipeModal()">Cancel</button>
+        <button class="btn-save" onclick="addRecipe()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // View Switcher
+    function switchView(viewName, event) {
+      if(event) event.preventDefault();
+      document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+      document.querySelectorAll('.nav-right .nav-link-btn').forEach(el => el.classList.remove('active-nav'));
+      
+      document.getElementById(`view-${viewName}`).classList.add('active-view');
+      document.getElementById(`nav-btn-${viewName}`).classList.add('active-nav');
+      
+      if(viewName === 'calendar') renderCalendar();
+    }
+
+    // Theme setup
+    function toggleTheme() {
+      const html = document.documentElement;
+      if (html.getAttribute('data-theme') === 'light') { html.removeAttribute('data-theme'); localStorage.setItem('custom_homepage_theme', 'dark'); document.getElementById('themeToggleBtn').innerHTML = '🌙'; } 
+      else { html.setAttribute('data-theme', 'light'); localStorage.setItem('custom_homepage_theme', 'light'); document.getElementById('themeToggleBtn').innerHTML = '☀️'; }
+    }
+    if (localStorage.getItem('custom_homepage_theme') === 'light') { document.documentElement.setAttribute('data-theme', 'light'); document.getElementById('themeToggleBtn').innerHTML = '☀️'; }
+
+    // Clock
+    let currentHour = -1;
+    function updateDateTime() {
+      const now = new Date();
+      if (now.getHours() !== currentHour) {
+        currentHour = now.getHours();
+        const msg = currentHour < 12 ? "Good morning" : currentHour < 18 ? "Good afternoon" : "Good evening";
+        document.getElementById('greeting').innerText = `${msg}, Nick!`;
+      }
+      document.getElementById('clock').innerText = now.toLocaleTimeString([], { hour12: false });
+      document.getElementById('date').innerText = now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    setInterval(updateDateTime, 1000); updateDateTime();
+
+    // Search
+    function setEngine(engine) {
+      const f = document.getElementById('searchForm'), i = document.getElementById('searchInput');
+      document.querySelectorAll('.engine-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`btn-${engine}`).classList.add('active');
+      if (engine === 'google') { f.action = 'https://www.google.com/search'; i.name = 'q'; i.placeholder = 'Search web...'; } 
+      else if (engine === 'youtube') { f.action = 'https://www.youtube.com/results'; i.name = 'search_query'; i.placeholder = 'Search YouTube...'; } 
+      else { f.action = 'https://en.wikipedia.org/w/index.php'; i.name = 'search'; i.placeholder = 'Search Wikipedia...'; }
+      i.focus();
+    }
+
+    // Tasks Logic
+    function loadTodos() { const s = JSON.parse(localStorage.getItem('custom_homepage_tasks'))||[]; const l = document.getElementById('todoList'); l.innerHTML=''; s.forEach((t,i)=>{ l.innerHTML+=`<li class="${t.completed?'completed':''}"><div class="todo-left"><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTodo(${i})"><span class="todo-text">${t.text}</span></div><button class="delete-btn" onclick="removeTodo(${i})">✕</button></li>`}); }
+    function addTodo(){ const i = document.getElementById('todoInput'); if(!i.value.trim())return; const t = JSON.parse(localStorage.getItem('custom_homepage_tasks'))||[]; t.push({text:i.value.trim(),completed:false}); localStorage.setItem('custom_homepage_tasks',JSON.stringify(t)); i.value=''; loadTodos();}
+    function toggleTodo(i){ const t = JSON.parse(localStorage.getItem('custom_homepage_tasks'))||[]; t[i].completed=!t[i].completed; localStorage.setItem('custom_homepage_tasks',JSON.stringify(t)); loadTodos();}
+    function removeTodo(i){ const t = JSON.parse(localStorage.getItem('custom_homepage_tasks'))||[]; t.splice(i,1); localStorage.setItem('custom_homepage_tasks',JSON.stringify(t)); loadTodos();}
+    loadTodos();
+
+    // Quick Calculator Logic
+    function calculate() {
+      const val = document.getElementById('calcInput').value;
+      const resEl = document.getElementById('calcResult');
+      if (!val.trim()) { resEl.innerText = '= 0'; return; }
+      try {
+        const sanitized = val.replace(/[^0-9+\-*/().\s]/g, '');
+        const ans = Function(`'use strict'; return (${sanitized})`)();
+        resEl.innerText = `= ${isFinite(ans) ? ans : 'Error'}`;
+      } catch (e) {
+        resEl.innerText = '= ...';
+      }
+    }
+
+    // Stocks Logic
+    let stocks = JSON.parse(localStorage.getItem('custom_homepage_real_stocks')) || ['NVDA','ASML','RHM.DE'];
+    async function fetchStocks(){ const c = document.getElementById('stockList'); if(!stocks.length) {c.innerHTML='No stocks tracked.'; return;} try{ const r = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(`https://query1.finance.yahoo.com/v7/finance/quote?symbols=${stocks.join(',')}`)}`); const d = await r.json(); c.innerHTML=''; d.quoteResponse.result.forEach(q=>{ const p=q.regularMarketPrice?.toFixed(2)||'N/A', pct=q.regularMarketChangePercent?.toFixed(2)||0, pos=pct>=0; c.innerHTML+=`<div class="stock-item"><div class="stock-info"><span class="stock-symbol">${q.symbol}</span></div><div class="stock-price-box"><div class="stock-price" style="color:${pos?'#34d399':'#f87171'}">${p}</div><div class="stock-change ${pos?'positive':'negative'}">${pos?'+':''}${pct}%</div><button class="action-icon-btn" onclick="removeStock('${q.symbol}')">✕</button></div></div>`}); }catch(e){c.innerHTML='Failed to load markets.';} }
+    fetchStocks(); setInterval(fetchStocks, 60000);
+    function openStockModal(){document.getElementById('stockModal').style.display='flex';} function closeStockModal(){document.getElementById('stockModal').style.display='none';}
+    function addStock(){ const s=document.getElementById('modalSymbol').value.toUpperCase(); if(s && !stocks.includes(s)){ stocks.push(s); localStorage.setItem('custom_homepage_real_stocks',JSON.stringify(stocks)); fetchStocks();} closeStockModal(); }
+    function removeStock(s){ stocks=stocks.filter(x=>x!==s); localStorage.setItem('custom_homepage_real_stocks',JSON.stringify(stocks)); fetchStocks();}
+
+    // Notes Logic
+    const notes = document.getElementById('quickNotes'); notes.value = localStorage.getItem('custom_homepage_notes')||'';
+    function saveNotes(){ localStorage.setItem('custom_homepage_notes', notes.value); }
+
+    // Calendar Logic
+    let currentMonth = new Date().getMonth(); let currentYear = new Date().getFullYear();
+    function renderCalendar() {
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-day-header">${d}</div>`).join('');
+      
+      document.getElementById('calendar-month-year').innerText = new Date(currentYear, currentMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+      for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="cal-day empty"></div>`;
+      
+      const today = new Date();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+        grid.innerHTML += `<div class="cal-day ${isToday ? 'today' : ''}">${day}</div>`;
+      }
+    }
+    function changeMonth(dir) { currentMonth += dir; if(currentMonth<0){currentMonth=11;currentYear--;} else if(currentMonth>11){currentMonth=0;currentYear++;} renderCalendar(); }
+
+    // Recipes Logic
+    const defaultRecipes = [
+      { id: 1, title: 'Spaghetti Bolognese', time: '45 mins', desc: 'Classic Italian pasta dish with a rich tomato and ground beef sauce.' },
+      { id: 2, title: 'Fluffy Pancakes', time: '15 mins', desc: 'A weekend staple. Needs flour, milk, eggs, baking powder, and butter.' }
+    ];
+    function loadRecipes() {
+      const recipes = JSON.parse(localStorage.getItem('custom_homepage_recipes')) || defaultRecipes;
+      const list = document.getElementById('recipeList');
+      list.innerHTML = '';
+      recipes.forEach(r => {
+        list.innerHTML += `
+          <div class="recipe-card">
+            <div class="recipe-title">${r.title.replace(/</g, "&lt;")}</div>
+            <div class="recipe-time">⏱️ ${r.time.replace(/</g, "&lt;")}</div>
+            <div class="recipe-desc">${r.desc.replace(/</g, "&lt;")}</div>
+            <div class="recipe-actions"><button class="action-icon-btn" onclick="deleteRecipe(${r.id})">Delete</button></div>
+          </div>
+        `;
+      });
+    }
+    function openRecipeModal() { document.getElementById('recipeModal').style.display = 'flex'; }
+    function closeRecipeModal() { document.getElementById('recipeModal').style.display = 'none'; document.getElementById('recipeTitle').value = ''; document.getElementById('recipeTime').value = ''; document.getElementById('recipeDesc').value = ''; }
+    function addRecipe() {
+      const title = document.getElementById('recipeTitle').value.trim();
+      const time = document.getElementById('recipeTime').value.trim() || 'Unknown';
+      const desc = document.getElementById('recipeDesc').value.trim();
+      if (!title) return;
+      const recipes = JSON.parse(localStorage.getItem('custom_homepage_recipes')) || defaultRecipes;
+      recipes.push({ id: Date.now(), title, time, desc });
+      localStorage.setItem('custom_homepage_recipes', JSON.stringify(recipes));
+      closeRecipeModal(); loadRecipes();
+    }
+    function deleteRecipe(id) {
+      let recipes = JSON.parse(localStorage.getItem('custom_homepage_recipes')) || defaultRecipes;
+      recipes = recipes.filter(r => r.id !== id);
+      localStorage.setItem('custom_homepage_recipes', JSON.stringify(recipes));
+      loadRecipes();
+    }
+    loadRecipes();
+  </script>
+</body>
+</html>
